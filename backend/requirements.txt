@@ -1,7 +1,12 @@
-fastapi
-uvicorn
-boto3
-python-multipart
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+boto3==1.28.64
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+sqlmodel==0.0.11
+pycryptodome==3.19.0
+geohash2==1.1
 python-dotenv
 pytest
 httpx
