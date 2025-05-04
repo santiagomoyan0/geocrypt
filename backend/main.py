@@ -260,3 +260,63 @@ def list_files(
 ):
     files = session.exec(select(FileModel).where(FileModel.user_id == current_user.id)).all()
     return files
+
+@app.get("/files/{file_id}", response_model=FileResponse)
+def get_file(
+    file_id: int,
+    current_user: User = Depends(auth.get_current_user),
+    session: Session = Depends(get_session)
+):
+    """Obtiene la información de un archivo específico por ID."""
+    file = session.exec(select(FileModel).where(FileModel.id == file_id)).first()
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Verificar que el usuario sea el propietario
+    if file.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    return file
+
+@app.delete("/files/{file_id}")
+def delete_file(
+    file_id: int,
+    current_user: User = Depends(auth.get_current_user),
+    session: Session = Depends(get_session)
+):
+    """Elimina un archivo por ID."""
+    file = session.exec(select(FileModel).where(FileModel.id == file_id)).first()
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Verificar que el usuario sea el propietario
+    if file.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    try:
+        # Eliminar de S3
+        try:
+            s3.delete_object(Bucket=BUCKET_NAME, Key=file.s3_key)
+            print(f"Archivo eliminado de S3: {file.s3_key}")
+        except Exception as e:
+            print(f"Error al eliminar de S3: {str(e)}")
+            # Intentar eliminar del almacenamiento local
+            local_path = os.path.join("uploads", file.s3_key)
+            try:
+                if os.path.exists(local_path):
+                    os.remove(local_path)
+                    print(f"Archivo eliminado localmente: {local_path}")
+            except Exception as local_error:
+                print(f"Error al eliminar archivo local: {str(local_error)}")
+        
+        # Eliminar de la base de datos
+        session.delete(file)
+        session.commit()
+        
+        return {"message": "File deleted successfully"}
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al eliminar el archivo: {str(e)}"
+        )
