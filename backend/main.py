@@ -234,14 +234,17 @@ async def download_file(
         # Asegurarnos de que las coordenadas sean números flotantes
         lat = float(lat)
         lon = float(lon)
-        print(f"Coordenadas para descifrado: lat={lat}, lon={lon}")
+        print(f"Geohash recibido: {geohash}")
+        print(f"Coordenadas decodificadas: lat={lat}, lon={lon}")
+        print(f"Geohash del archivo en BD: {file.geohash}")
+        print(f"Tamaño del contenido cifrado: {len(encrypted_content)} bytes")
         decrypted_content = crypto.decrypt_file(encrypted_content, lat, lon)
         print(f"Archivo descifrado exitosamente: {len(decrypted_content)} bytes")
     except Exception as e:
         print(f"Error al descifrar archivo: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail="Error al descifrar el archivo"
+            detail=f"Error al descifrar el archivo: {str(e)}"
         )
     
     return {

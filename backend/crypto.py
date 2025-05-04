@@ -4,7 +4,7 @@ import geohash2
 
 def derive_key_from_location(latitude: float, longitude: float) -> bytes:
     """Deriva una clave AES de 32 bytes a partir de la ubicación."""
-    gh = geohash2.encode(latitude, longitude, precision=12)
+    gh = geohash2.encode(latitude, longitude, precision=7)
     # Usar el geohash como semilla para generar una clave de 32 bytes
     key = gh.encode('utf-8') * (32 // len(gh) + 1)
     return key[:32]
