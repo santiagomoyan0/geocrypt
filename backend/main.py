@@ -130,7 +130,7 @@ async def upload_file(
         print(f"Contenido cifrado: {len(encrypted_content)} bytes")
         
         # Generar geohash
-        gh = geohash2.encode(latitude, longitude, precision=8)
+        gh = geohash2.encode(latitude, longitude, precision=7)
         print(f"Geohash generado: {gh}")
         
         # Verificar configuración de S3
@@ -194,6 +194,7 @@ async def download_file(
     file_id: int,
     geohash: str,
     current_user: User = Depends(auth.get_current_user),
+    save_path: str = "downloads",
     session: Session = Depends(get_session)
 ):
     # Obtener el archivo de la base de datos
@@ -230,7 +231,7 @@ async def download_file(
     # Descifrar el archivo
     try:
         # Decodificar el geohash para obtener las coordenadas
-        lat, lon = geohash2.decode(geohash)
+        lat, lon, me1, me2 = geohash2.decode_exactly(geohash)
         # Asegurarnos de que las coordenadas sean números flotantes
         lat = float(lat)
         lon = float(lon)
@@ -240,6 +241,12 @@ async def download_file(
         print(f"Tamaño del contenido cifrado: {len(encrypted_content)} bytes")
         decrypted_content = crypto.decrypt_file(encrypted_content, lat, lon)
         print(f"Archivo descifrado exitosamente: {len(decrypted_content)} bytes")
+        # Guardar el archivo descifrado en el sistema de archivos
+        os.makedirs(save_path, exist_ok=True)
+        output_file_path = os.path.join(save_path, file.filename)
+        with open(output_file_path, "wb") as output_file:
+            output_file.write(decrypted_content)
+        print(f"Archivo guardado en: {output_file_path}")
     except Exception as e:
         print(f"Error al descifrar archivo: {str(e)}")
         raise HTTPException(
