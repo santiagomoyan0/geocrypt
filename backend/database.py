@@ -10,11 +10,7 @@ engine = create_engine(
 )
 
 def init_db():
-    # Eliminar la base de datos si existe
-    if os.path.exists("geocrypt.db"):
-        os.remove("geocrypt.db")
-    
-    # Crear todas las tablas
+    # Crear todas las tablas si no existen
     SQLModel.metadata.create_all(engine)
 
 def get_session():
